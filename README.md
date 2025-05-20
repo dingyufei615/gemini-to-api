@@ -20,8 +20,9 @@
 
 -   `SECURE_1PSID`: 您的 Gemini网页端 `__Secure-1PSID` Cookie 值。
 -   `SECURE_1PSIDTS`: 您的 Gemini网页端 `__Secure-1PSIDTS` Cookie 值。
+-   `GEMINI_PROXY` (可选): 用于访问 Gemini API 的代理服务器地址，例如 `http://localhost:7890` 或 `socks5://localhost:1080`。如果您的网络环境需要代理才能访问 Google 服务，请设置此项。
 
-浏览器打开Gemini网页端登录后，通过开发者工具查看Cookie中该项的值。
+浏览器打开Gemini网页端登录后，通过开发者工具查看Cookie中 `__Secure-1PSID` 和 `__Secure-1PSIDTS` 的值。
 
 ## 如何运行
 
@@ -38,8 +39,10 @@
     docker run -d -p 8899:8899 \
       -e SECURE_1PSID="YOUR_SECURE_1PSID_VALUE" \
       -e SECURE_1PSIDTS="YOUR_SECURE_1PSIDTS_VALUE" \
+      -e GEMINI_PROXY="YOUR_PROXY_URL_IF_NEEDED" \
       --name gemini_api gemini-openai-api
     ```
+    如果您不需要代理，可以省略 `-e GEMINI_PROXY="YOUR_PROXY_URL_IF_NEEDED"` 这一行。
 
 ### 本地运行 (用于开发)
 
@@ -65,8 +68,9 @@
     ```bash
     export SECURE_1PSID="YOUR_SECURE_1PSID_VALUE"
     export SECURE_1PSIDTS="YOUR_SECURE_1PSIDTS_VALUE"
+    export GEMINI_PROXY="YOUR_PROXY_URL_IF_NEEDED" # 如果需要代理，请设置此项
     ```
-    对于 Windows，使用 `set SECURE_1PSID=YOUR_SECURE_1PSID_VALUE`。
+    对于 Windows，使用 `set SECURE_1PSID=YOUR_SECURE_1PSID_VALUE`，`set SECURE_1PSIDTS=YOUR_SECURE_1PSIDTS_VALUE` 和 `set GEMINI_PROXY=YOUR_PROXY_URL_IF_NEEDED`。如果不需要代理，可以省略 GEMINI_PROXY 相关的设置。
 
 5.  **启动应用 (使用 Uvicorn):**
     ```bash

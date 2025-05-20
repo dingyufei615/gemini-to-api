@@ -13,6 +13,7 @@ from gemini_webapi import GeminiClient
 # Load sensitive credentials from environment variables
 Secure_1PSID = os.environ.get("SECURE_1PSID")
 Secure_1PSIDTS = os.environ.get("SECURE_1PSIDTS")
+GEMINI_PROXY = os.environ.get("GEMINI_PROXY") # Read proxy configuration
 
 if not Secure_1PSID or not Secure_1PSIDTS:
     print("CRITICAL: Environment variables SECURE_1PSID or SECURE_1PSIDTS not set.")
@@ -20,8 +21,11 @@ if not Secure_1PSID or not Secure_1PSIDTS:
     # or allow the app to start but GeminiClient will fail to initialize.
     # For now, initialization will be attempted, but will likely fail if these are None.
 
+if GEMINI_PROXY:
+    print(f"INFO: Using proxy for Gemini Client: {GEMINI_PROXY}")
+
 # Initialize Gemini Client globally
-gemini_client = GeminiClient(Secure_1PSID, Secure_1PSIDTS, proxy=None)
+gemini_client = GeminiClient(Secure_1PSID, Secure_1PSIDTS, proxy=GEMINI_PROXY)
 gemini_client_ready = False # Flag to track Gemini Client readiness
 
 # FastAPI app instance
