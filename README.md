@@ -43,7 +43,7 @@
 
 ### 本地运行 (用于开发)
 
-1.  **克隆仓库 (如果尚未克隆):**
+1.  **克隆仓库:**
     ```bash
      git clone https://github.com/dingyufei615/gemini-to-api.git
      cd gemini-to-api
