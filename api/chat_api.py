@@ -25,7 +25,7 @@ if GEMINI_PROXY:
     print(f"INFO: Using proxy for Gemini Client: {GEMINI_PROXY}")
 
 # Initialize Gemini Client globally
-gemini_client = GeminiClient(Secure_1PSID, Secure_1PSIDTS, proxy=GEMINI_PROXY)
+gemini_client = GeminiClient(Secure_1PSID, Secure_1PSIDTS, proxy=GEMINI_PROXY, timeout=600)
 gemini_client_ready = False  # Flag to track Gemini Client readiness
 
 # FastAPI app instance
