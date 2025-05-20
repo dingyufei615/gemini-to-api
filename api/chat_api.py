@@ -13,7 +13,7 @@ from gemini_webapi import GeminiClient
 # Load sensitive credentials from environment variables
 Secure_1PSID = os.environ.get("SECURE_1PSID")
 Secure_1PSIDTS = os.environ.get("SECURE_1PSIDTS")
-GEMINI_PROXY = os.environ.get("GEMINI_PROXY") # Read proxy configuration
+GEMINI_PROXY = os.environ.get("GEMINI_PROXY")  # Read proxy configuration
 
 if not Secure_1PSID or not Secure_1PSIDTS:
     print("CRITICAL: Environment variables SECURE_1PSID or SECURE_1PSIDTS not set.")
@@ -26,10 +26,11 @@ if GEMINI_PROXY:
 
 # Initialize Gemini Client globally
 gemini_client = GeminiClient(Secure_1PSID, Secure_1PSIDTS, proxy=GEMINI_PROXY)
-gemini_client_ready = False # Flag to track Gemini Client readiness
+gemini_client_ready = False  # Flag to track Gemini Client readiness
 
 # FastAPI app instance
 app = FastAPI(title="Gemini OpenAI-Compatible API", version="0.1.0")
+
 
 # --- Pydantic Models for OpenAI Compatibility ---
 
@@ -37,25 +38,30 @@ class ChatMessage(BaseModel):
     role: str
     content: str
 
+
 class ChatCompletionRequest(BaseModel):
     model: str
     messages: List[ChatMessage]
     stream: Optional[bool] = False
+
 
 # For non-streaming response
 class ChatCompletionResponseMessage(BaseModel):
     role: str
     content: str
 
+
 class ChatCompletionResponseChoice(BaseModel):
     index: int
     message: ChatCompletionResponseMessage
     finish_reason: Optional[str] = "stop"
 
-class UsageInfo(BaseModel): # Optional: Placeholder if token info becomes available
+
+class UsageInfo(BaseModel):  # Optional: Placeholder if token info becomes available
     prompt_tokens: Optional[int] = None
     completion_tokens: Optional[int] = None
     total_tokens: Optional[int] = None
+
 
 class ChatCompletionResponse(BaseModel):
     id: str = Field(default_factory=lambda: f"chatcmpl-{uuid.uuid4().hex}")
@@ -63,17 +69,20 @@ class ChatCompletionResponse(BaseModel):
     created: int = Field(default_factory=lambda: int(time.time()))
     model: str
     choices: List[ChatCompletionResponseChoice]
-    usage: Optional[UsageInfo] = None # Gemini Web API might not provide token usage easily
+    usage: Optional[UsageInfo] = None  # Gemini Web API might not provide token usage easily
+
 
 # For streaming response
 class DeltaMessage(BaseModel):
     role: Optional[str] = None
     content: Optional[str] = None
 
+
 class ChatCompletionResponseStreamChoice(BaseModel):
     index: int
     delta: DeltaMessage
-    finish_reason: Optional[str] = None # Will be "stop" in the final chunk
+    finish_reason: Optional[str] = None  # Will be "stop" in the final chunk
+
 
 class ChatCompletionStreamResponse(BaseModel):
     id: str = Field(default_factory=lambda: f"chatcmpl-{uuid.uuid4().hex}")
@@ -81,6 +90,21 @@ class ChatCompletionStreamResponse(BaseModel):
     created: int = Field(default_factory=lambda: int(time.time()))
     model: str
     choices: List[ChatCompletionResponseStreamChoice]
+
+
+# --- Pydantic Models for /v1/models endpoint ---
+
+class ModelCard(BaseModel):
+    id: str
+    object: str = "model"
+    created: int = Field(default_factory=lambda: int(time.time()))
+    owned_by: str = "google"  # Or a more appropriate owner string
+
+
+class ModelList(BaseModel):
+    object: str = "list"
+    data: List[ModelCard]
+
 
 # --- FastAPI Event Handlers ---
 @app.on_event("startup")
@@ -106,14 +130,16 @@ async def startup_event():
         # Depending on policy, the app could exit or try to re-initialize later.
         # For now, endpoints will fail if client is not ready.
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     global gemini_client_ready
     """Closes the Gemini Client on application shutdown."""
     print("Closing Gemini Client...")
-    await gemini_client.close() # Assume close() is safe to call
+    await gemini_client.close()  # Assume close() is safe to call
     gemini_client_ready = False
     print("Gemini Client closed.")
+
 
 # --- Helper to construct prompt from messages ---
 def construct_prompt_from_messages(messages: List[ChatMessage]) -> str:
@@ -134,28 +160,54 @@ def construct_prompt_from_messages(messages: List[ChatMessage]) -> str:
             if system_instruction:
                 # Prepend system instruction to the first user message after it.
                 prompt_parts.append(f"System Note: {system_instruction}\nUser: {content}")
-                system_instruction = None # Consume it
+                system_instruction = None  # Consume it
             else:
                 prompt_parts.append(f"User: {content}")
         elif role == "assistant":
             prompt_parts.append(f"Assistant: {msg.content}")
-        else: # Unknown role
-             prompt_parts.append(f"{msg.role.capitalize()}: {msg.content}")
-    
+        else:  # Unknown role
+            prompt_parts.append(f"{msg.role.capitalize()}: {msg.content}")
+
     return "\n\n".join(prompt_parts)
 
 
-# --- API Endpoint ---
-@app.post("/v1/chat/completions", response_model=None) # response_model handled by Streaming or direct return
-async def create_chat_completion(request: ChatCompletionRequest, http_request: Request): # http_request for client disconnect check
+# --- API Endpoints ---
+
+# Static list of models based on README.md
+# Note: "created" timestamp will be dynamic based on when ModelCard is instantiated.
+# "owned_by" is set to "google" as a general owner for these models.
+AVAILABLE_MODELS = [
+    ModelCard(id="unspecified"),  # Default model
+    ModelCard(id="gemini-2.0-flash"),
+    ModelCard(id="gemini-2.0-flash-thinking"),  # Experimental
+    ModelCard(id="gemini-2.5-flash"),
+    ModelCard(id="gemini-2.5-pro"),  # Daily usage limit
+    ModelCard(id="gemini-2.5-exp-advanced"),  # Requires Gemini Advanced
+    ModelCard(id="gemini-2.0-exp-advanced"),  # Requires Gemini Advanced
+]
+
+
+@app.get("/v1/models", response_model=ModelList)
+async def list_models():
+    """
+    Lists the currently available models.
+    Based on OpenAI's /v1/models endpoint.
+    """
+    return ModelList(data=AVAILABLE_MODELS)
+
+
+@app.post("/v1/chat/completions", response_model=None)  # response_model handled by Streaming or direct return
+async def create_chat_completion(request: ChatCompletionRequest,
+                                 http_request: Request):  # http_request for client disconnect check
     """
     OpenAI-compatible chat completion endpoint.
     Supports both streaming and non-streaming responses.
     """
     global gemini_client_ready
-    if not gemini_client_ready: # Basic check using our flag
+    if not gemini_client_ready:  # Basic check using our flag
         print("Error: Gemini client session not active or closed.")
-        raise HTTPException(status_code=503, detail="Gemini client is not initialized or session closed. Please try again shortly.")
+        raise HTTPException(status_code=503,
+                            detail="Gemini client is not initialized or session closed. Please try again shortly.")
 
     if not request.messages:
         raise HTTPException(status_code=400, detail="No messages provided in the request.")
@@ -168,7 +220,7 @@ async def create_chat_completion(request: ChatCompletionRequest, http_request: R
     # for a stateless OpenAI-like API call.
     final_prompt = construct_prompt_from_messages(request.messages)
 
-    if not final_prompt: # Ensure there's something to send
+    if not final_prompt:  # Ensure there's something to send
         raise HTTPException(status_code=400, detail="Failed to construct a valid prompt from messages.")
 
     try:
@@ -178,12 +230,12 @@ async def create_chat_completion(request: ChatCompletionRequest, http_request: R
             prompt=final_prompt,
             model=request.model
         )
-        
+
         gemini_response_text = ""
         if gemini_api_response and hasattr(gemini_api_response, 'text'):
             gemini_response_text = gemini_api_response.text
-        elif gemini_api_response and isinstance(gemini_api_response, str): # Fallback if API changes
-             gemini_response_text = gemini_api_response
+        elif gemini_api_response and isinstance(gemini_api_response, str):  # Fallback if API changes
+            gemini_response_text = gemini_api_response
         else:
             # Log unexpected response structure
             print(f"Warning: Unexpected response structure from Gemini generate_content: {gemini_api_response}")
@@ -219,7 +271,7 @@ async def create_chat_completion(request: ChatCompletionRequest, http_request: R
                 yield f"data: {response_chunk.model_dump_json(exclude_none=True)}\n\n"
 
                 # Send final chunk indicating completion
-                final_delta = DeltaMessage() # Empty delta for final chunk
+                final_delta = DeltaMessage()  # Empty delta for final chunk
                 final_choice = ChatCompletionResponseStreamChoice(
                     index=0,
                     delta=final_delta,
@@ -228,7 +280,7 @@ async def create_chat_completion(request: ChatCompletionRequest, http_request: R
                 final_response_chunk = ChatCompletionStreamResponse(
                     id=response_id,
                     object="chat.completion.chunk",
-                    created=created_time, # Should be same timestamp or new one? OpenAI uses same.
+                    created=created_time,  # Should be same timestamp or new one? OpenAI uses same.
                     model=request.model,
                     choices=[final_choice]
                 )
@@ -257,5 +309,5 @@ async def create_chat_completion(request: ChatCompletionRequest, http_request: R
                     finish_reason="stop"
                 )
             ],
-            usage=UsageInfo() # Placeholder for usage, as gemini-webapi may not provide it
+            usage=UsageInfo()  # Placeholder for usage, as gemini-webapi may not provide it
         )
