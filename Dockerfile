@@ -13,7 +13,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 将项目代码复制到工作目录
 COPY ./api /app/api
-COPY ./main.py /app/main.py
 # 如果您有一个 main.py 在根目录启动应用，请包含它
 # 如果您的启动脚本在 api 目录内，例如 api/chat_api.py，则上一行可能不需要
 
