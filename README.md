@@ -94,15 +94,24 @@
 ```
 
 ## 模型
+
 unspecified - Default model
+
 gemini-2.0-flash - Gemini 2.0 Flash
+
 gemini-2.0-flash-thinking - Gemini 2.0 Flash Thinking Experimental
+
 gemini-2.5-flash - Gemini 2.5 Flash
+
 gemini-2.5-pro - Gemini 2.5 Pro (daily usage limit imposed)
 
+
 Models pending update (may not work as expected):
+
 gemini-2.5-exp-advanced - Gemini 2.5 Experimental Advanced (requires Gemini Advanced account)
+
 gemini-2.0-exp-advanced - Gemini 2.0 Experimental Advanced (requires Gemini Advanced account)
+
 
 **响应:**
 
@@ -116,5 +125,6 @@ gemini-2.0-exp-advanced - Gemini 2.0 Experimental Advanced (requires Gemini Adva
 -   **`gemini-webapi` 库**: 此项目依赖于 `gemini-webapi` 库。该库与非官方的 Gemini Web API 交互，其行为可能会随 Google 对 Gemini Web API 的更改而更改。
 
 ## 贡献
-
+感谢 https://github.com/HanaokaYuzu/Gemini-API 提供的 gemini-webapi 实现。
+本项目代码99.99% 由 Gemini-2.5-pro + Aider 共同完成。
 欢迎提出问题、错误报告和PR。
