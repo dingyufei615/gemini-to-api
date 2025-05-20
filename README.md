@@ -9,9 +9,9 @@
 -   提供 `/v1/models` 端点以列出可用模型。
 -   通过环境变量配置 Gemini 的认证凭据。
 
-## 先决条件
+## 环境准备
 
--   Python 3.8+
+-   Python 3.10+
 -   Docker (推荐用于部署)
 -   有效的 `Secure_1PSID` 和 `Secure_1PSIDTS` Cookie 值用于访问 Gemini，建议您拥有Advance账号最好。
 
