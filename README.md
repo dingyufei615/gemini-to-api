@@ -1,6 +1,6 @@
 # Gemini OpenAI 兼容 API
 
-本项目提供了一个与 OpenAI API 兼容的接口，其后端通过 `gemini-webapi`库与 Google Gemini 模型进行交互。
+本项目提供了一个与 OpenAI API 兼容的接口，其后端通过 `gemini-webapi`库与 Google Gemini 模型进行交互，模拟Gemini网页端进行聊天交互。
 
 ## 功能
 
@@ -12,14 +12,16 @@
 
 -   Python 3.8+
 -   Docker (推荐用于部署)
--   有效的 `Secure_1PSID` 和 `Secure_1PSIDTS` Cookie 值用于访问 Gemini。
+-   有效的 `Secure_1PSID` 和 `Secure_1PSIDTS` Cookie 值用于访问 Gemini，建议您拥有Advance账号最好。
 
 ## 环境变量
 
 在运行此应用之前，您需要设置以下环境变量：
 
--   `SECURE_1PSID`: 您的 Google Account `__Secure-1PSID` Cookie 值。
--   `SECURE_1PSIDTS`: 您的 Google Account `__Secure-1PSIDTS` Cookie 值。
+-   `SECURE_1PSID`: 您的 Gemini网页端 `__Secure-1PSID` Cookie 值。
+-   `SECURE_1PSIDTS`: 您的 Gemini网页端 `__Secure-1PSIDTS` Cookie 值。
+
+浏览器打开Gemini网页端登录后，通过开发者工具查看Cookie中该项的值。
 
 ## 如何运行
 
@@ -43,8 +45,8 @@
 
 1.  **克隆仓库 (如果尚未克隆):**
     ```bash
-    # git clone <repository_url>
-    # cd <repository_directory>
+     git clone https://github.com/dingyufei615/gemini-to-api.git
+     cd gemini-to-api
     ```
 
 2.  **创建并激活虚拟环境 (推荐):**
