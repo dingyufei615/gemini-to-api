@@ -25,7 +25,7 @@ if GEMINI_PROXY:
     print(f"INFO: Using proxy for Gemini Client: {GEMINI_PROXY}")
 
 # Initialize Gemini Client globally
-gemini_client = GeminiClient(Secure_1PSID, Secure_1PSIDTS, proxy=GEMINI_PROXY, timeout=600)
+gemini_client = GeminiClient(Secure_1PSID, Secure_1PSIDTS, proxy=GEMINI_PROXY)
 gemini_client_ready = False  # Flag to track Gemini Client readiness
 
 # FastAPI app instance
@@ -120,7 +120,7 @@ async def startup_event():
     try:
         print("Initializing Gemini Client...")
         # Parameters for init can be adjusted as needed
-        await gemini_client.init(timeout=30, auto_close=False, close_delay=300, auto_refresh=True)
+        await gemini_client.init(timeout=300, auto_close=False, close_delay=300, auto_refresh=True)
         gemini_client_ready = True
         print("Gemini Client initialized successfully.")
     except Exception as e:
