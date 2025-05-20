@@ -6,6 +6,7 @@
 
 -   模拟 OpenAI 的 `/v1/chat/completions` 端点。
 -   支持流式和非流式响应。
+-   提供 `/v1/models` 端点以列出可用模型。
 -   通过环境变量配置 Gemini 的认证凭据。
 
 ## 先决条件
@@ -74,9 +75,9 @@
 
 5.  **启动应用 (使用 Uvicorn):**
     ```bash
-    uvicorn api.chat_api:app --host 0.0.0.0 --port 8000 --reload
+    uvicorn api.chat_api:app --host 0.0.0.0 --port 8899 --reload
     ```
-    `--reload` 标志用于在代码更改时自动重新加载服务器，非常适合开发。
+    `--reload` 标志用于在代码更改时自动重新加载服务器，非常适合开发。请注意，此处端口为 `8899`，与 Docker 配置一致。
 
 ## API 端点
 
@@ -97,25 +98,44 @@
 }
 ```
 
+### `GET /v1/models`
+
+此端点列出当前应用支持的模型。
+
+**响应示例:**
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "unspecified",
+      "object": "model",
+      "created": 1716190000,
+      "owned_by": "google"
+    },
+    {
+      "id": "gemini-2.0-flash",
+      "object": "model",
+      "created": 1716190000,
+      "owned_by": "google"
+    },
+    // ... 其他模型
+  ]
+}
+```
+
 ## 模型
 
-unspecified - Default model
+以下是当前支持的模型列表，与 `/v1/models` 端点返回的一致：
 
-gemini-2.0-flash - Gemini 2.0 Flash
-
-gemini-2.0-flash-thinking - Gemini 2.0 Flash Thinking Experimental
-
-gemini-2.5-flash - Gemini 2.5 Flash
-
-gemini-2.5-pro - Gemini 2.5 Pro (daily usage limit imposed)
-
-
-Models pending update (may not work as expected):
-
-gemini-2.5-exp-advanced - Gemini 2.5 Experimental Advanced (requires Gemini Advanced account)
-
-gemini-2.0-exp-advanced - Gemini 2.0 Experimental Advanced (requires Gemini Advanced account)
-
+-   `unspecified` - 默认模型
+-   `gemini-2.0-flash` - Gemini 2.0 Flash
+-   `gemini-2.0-flash-thinking` - Gemini 2.0 Flash Thinking (实验性)
+-   `gemini-2.5-flash` - Gemini 2.5 Flash
+-   `gemini-2.5-pro` - Gemini 2.5 Pro (有每日使用限制)
+-   `gemini-2.5-exp-advanced` - Gemini 2.5 Experimental Advanced (需要 Gemini Advanced 账户)
+-   `gemini-2.0-exp-advanced` - Gemini 2.0 Experimental Advanced (需要 Gemini Advanced 账户)
 
 **响应:**
 
