@@ -25,62 +25,11 @@ if GEMINI_PROXY:
     print(f"INFO: Using proxy for Gemini Client: {GEMINI_PROXY}")
 
 # Initialize Gemini Client globally
-gemini_client: Optional[GeminiClient] = None  # Initialize as None
+gemini_client = GeminiClient(Secure_1PSID, Secure_1PSIDTS, proxy=GEMINI_PROXY)
 gemini_client_ready = False  # Flag to track Gemini Client readiness
 
 # FastAPI app instance
 app = FastAPI(title="Gemini OpenAI-Compatible API", version="0.1.0")
-
-
-# --- Helper function to re-initialize Gemini Client ---
-async def reinitialize_gemini_client(new_psid: Optional[str] = None, new_psidts: Optional[str] = None):
-    """
-    Closes any existing Gemini client session, updates cookies if provided,
-    and initializes a new Gemini client session.
-    """
-    global gemini_client, gemini_client_ready, Secure_1PSID, Secure_1PSIDTS, GEMINI_PROXY
-
-    if new_psid:
-        Secure_1PSID = new_psid
-        print(f"INFO: Secure_1PSID updated via API.")
-    if new_psidts:
-        Secure_1PSIDTS = new_psidts
-        print(f"INFO: Secure_1PSIDTS updated via API.")
-
-    gemini_client_ready = False
-    print("INFO: Attempting to re-initialize Gemini Client...")
-
-    # Close existing client session if any
-    if gemini_client and hasattr(gemini_client, 'close'):
-        try:
-            # Check if session exists or if close needs it.
-            # Assuming gemini_client.close() is safe to call even if not fully initialized or session is None.
-            print("INFO: Closing existing Gemini Client session...")
-            await gemini_client.close()
-        except Exception as e:
-            print(f"WARNING: Error closing existing Gemini Client: {e}")
-
-    if not Secure_1PSID or not Secure_1PSIDTS:
-        print("ERROR: SECURE_1PSID and SECURE_1PSIDTS environment variables (or API-provided values) must be set to initialize Gemini Client.")
-        gemini_client = None # Ensure client is None if cookies are missing
-        return
-
-    # Create and initialize a new client instance
-    try:
-        print(f"INFO: Creating new GeminiClient instance. PSID starts with: {Secure_1PSID[:10] if Secure_1PSID else 'N/A'}, PSIDTS starts with: {Secure_1PSIDTS[:10] if Secure_1PSIDTS else 'N/A'}")
-        gemini_client = GeminiClient(
-            Secure_1PSID=Secure_1PSID,
-            Secure_1PSIDTS=Secure_1PSIDTS,
-            proxy=GEMINI_PROXY
-        )
-        print("INFO: Initializing new Gemini Client...")
-        await gemini_client.init(timeout=30, auto_close=False, close_delay=300, auto_refresh=True)
-        gemini_client_ready = True
-        print("INFO: Gemini Client re-initialized successfully.")
-    except Exception as e:
-        gemini_client = None # Ensure client is None on failed init
-        gemini_client_ready = False
-        print(f"CRITICAL: Failed to re-initialize Gemini Client: {e}")
 
 
 # --- Pydantic Models for OpenAI Compatibility ---
@@ -143,11 +92,6 @@ class ChatCompletionStreamResponse(BaseModel):
     choices: List[ChatCompletionResponseStreamChoice]
 
 
-class CookieData(BaseModel):
-    Secure_1PAPISID: str = Field(..., alias="__Secure-1PAPISID")
-    Secure_1PSIDTS: str = Field(..., alias="__Secure-1PSIDTS")
-
-
 # --- Pydantic Models for /v1/models endpoint ---
 
 class ModelCard(BaseModel):
@@ -165,27 +109,36 @@ class ModelList(BaseModel):
 # --- FastAPI Event Handlers ---
 @app.on_event("startup")
 async def startup_event():
-    """Initializes/Re-initializes the Gemini Client on application startup."""
-    print("INFO: Application startup: Initializing Gemini Client from environment variables...")
-    # Secure_1PSID, Secure_1PSIDTS, and GEMINI_PROXY are global and read from env initially.
-    # reinitialize_gemini_client will use these global values.
-    await reinitialize_gemini_client()
-    # The reinitialize_gemini_client function will print its own success/failure messages.
+    global gemini_client_ready
+    """Initializes the Gemini Client on application startup."""
+    global gemini_client_ready
+    if not Secure_1PSID or not Secure_1PSIDTS:
+        print("Error: SECURE_1PSID and SECURE_1PSIDTS environment variables must be set to initialize Gemini Client.")
+        gemini_client_ready = False
+        return
+
+    try:
+        print("Initializing Gemini Client...")
+        # Parameters for init can be adjusted as needed
+        await gemini_client.init(timeout=300, auto_close=False, close_delay=300, auto_refresh=True)
+        gemini_client_ready = True
+        print("Gemini Client initialized successfully.")
+    except Exception as e:
+        gemini_client_ready = False
+        # Log this error properly in a production scenario
+        print(f"CRITICAL: Failed to initialize Gemini Client during startup: {e}")
+        # Depending on policy, the app could exit or try to re-initialize later.
+        # For now, endpoints will fail if client is not ready.
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    global gemini_client_ready
     """Closes the Gemini Client on application shutdown."""
-    global gemini_client_ready, gemini_client
-    print("INFO: Closing Gemini Client...")
-    if gemini_client and hasattr(gemini_client, 'close'):
-        try:
-            await gemini_client.close()
-        except Exception as e:
-            print(f"WARNING: Error during Gemini Client shutdown: {e}")
-    gemini_client = None
+    print("Closing Gemini Client...")
+    await gemini_client.close()  # Assume close() is safe to call
     gemini_client_ready = False
-    print("INFO: Gemini Client closed and resources released.")
+    print("Gemini Client closed.")
 
 
 # --- Helper to construct prompt from messages ---
@@ -241,23 +194,6 @@ async def list_models():
     Based on OpenAI's /v1/models endpoint.
     """
     return ModelList(data=AVAILABLE_MODELS)
-
-
-@app.post("/api/cookies")
-async def update_cookies_endpoint(payload: CookieData):
-    """
-    Receives new cookie data, updates global cookie variables,
-    and re-initializes the Gemini client.
-    """
-    print(f"INFO: Received request to update cookies. PAPISID starts with: {payload.Secure_1PAPISID[:10] if payload.Secure_1PAPISID else 'N/A'}, PSIDTS starts with: {payload.Secure_1PSIDTS[:10] if payload.Secure_1PSIDTS else 'N/A'}")
-
-    await reinitialize_gemini_client(new_psid=payload.Secure_1PAPISID, new_psidts=payload.Secure_1PSIDTS)
-
-    if gemini_client_ready:
-        return {"message": "Cookies updated and Gemini client re-initialized successfully."}
-    else:
-        # reinitialize_gemini_client would have printed the detailed error.
-        raise HTTPException(status_code=503, detail="Failed to update cookies and re-initialize Gemini client. Check server logs for details.")
 
 
 @app.post("/v1/chat/completions", response_model=None)  # response_model handled by Streaming or direct return
