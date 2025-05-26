@@ -3,8 +3,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const statusDisplay = document.getElementById('statusDisplay');
 
     const targetUrlForCookies = "https://gemini.google.com";
+    // 我们将获取这三个Cookie，因为__Secure-1PSID是你最初的目标，
     // 另外两个来自你的用户脚本。
-    const cookieNamesToFetch = ["__Secure-1PSID", "__Secure-1PSIDTS"];
+    const cookieNamesToFetch = ["__Secure-1PSID", "__Secure-1PAPISID", "__Secure-1PSIDTS"];
     const postDataUrl = 'http://192.168.202.190:8899/api/cookies';
 
     sendButton.addEventListener('click', async function () {
