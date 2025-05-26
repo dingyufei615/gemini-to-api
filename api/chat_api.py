@@ -32,6 +32,11 @@ gemini_client_ready = False  # Flag to track Gemini Client readiness
 app = FastAPI(title="Gemini OpenAI-Compatible API", version="0.1.0")
 
 
+# --- Pydantic Model for Cookie Update ---
+class CookieUpdateRequest(BaseModel):
+    secure_1papisid: str = Field(..., alias='__Secure-1PAPISID')
+    secure_1psidts: str = Field(..., alias='__Secure-1PSIDTS')
+
 # --- Pydantic Models for OpenAI Compatibility ---
 
 class ChatMessage(BaseModel):
@@ -186,6 +191,50 @@ AVAILABLE_MODELS = [
     ModelCard(id="gemini-2.0-exp-advanced"),  # Requires Gemini Advanced
 ]
 
+
+@app.post("/api/cookies")
+async def update_cookies(cookie_data: CookieUpdateRequest):
+    """
+    更新Gemini认证凭据的接口
+    """
+    global Secure_1PSID, Secure_1PSIDTS, gemini_client, gemini_client_ready
+    
+    # 安全验证建议：生产环境应添加API Key验证
+    # if not verify_api_key(request.headers.get("Authorization")):
+    #     raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        # 关闭现有客户端连接
+        if gemini_client_ready:
+            await gemini_client.close()
+            print("Closed existing Gemini client connection")
+
+        # 更新环境变量
+        os.environ["SECURE_1PSID"] = cookie_data.secure_1papisid
+        os.environ["SECURE_1PSIDTS"] = cookie_data.secure_1psidts
+        Secure_1PSID = cookie_data.secure_1papisid
+        Secure_1PSIDTS = cookie_data.secure_1psidts
+
+        # 重新初始化客户端
+        gemini_client = GeminiClient(Secure_1PSID, Secure_1PSIDTS, proxy=GEMINI_PROXY)
+        await gemini_client.init(
+            timeout=300,
+            auto_close=False,
+            close_delay=300,
+            auto_refresh=True
+        )
+        gemini_client_ready = True
+        print("Successfully updated cookies and reinitialized Gemini client")
+
+        return {"status": "success", "message": "Cookies updated successfully"}
+
+    except Exception as e:
+        gemini_client_ready = False
+        print(f"Failed to update cookies: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update cookies: {str(e)}"
+        )
 
 @app.get("/v1/models", response_model=ModelList)
 async def list_models():
