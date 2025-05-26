@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Gemini Cookie 发送器",
+  "version": "1.1",
+  "description": "获取并发送 gemini.google.com 的指定 cookies 到特定URL。",
+  "permissions": [
+    "cookies"
+  ],
+  "host_permissions": [
+    "https://gemini.google.com/",
+    "http://192.168.202.190/"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
+}
