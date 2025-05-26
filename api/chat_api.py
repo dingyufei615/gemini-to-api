@@ -148,7 +148,7 @@ from typing import Optional # 导入 Optional
 
 class CookieData(BaseModel):
     # 将字段修改为可选，并提供默认值 None
-    Secure_1PAPISID: Optional[str] = Field(default=None, alias="__Secure-1PAPISID")
+    Secure_1PAPISID: Optional[str] = Field(default=None, alias="__Secure-1PSID")
     Secure_1PSIDTS: Optional[str] = Field(default=None, alias="__Secure-1PSIDTS")
 
 
