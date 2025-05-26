@@ -143,9 +143,13 @@ class ChatCompletionStreamResponse(BaseModel):
     choices: List[ChatCompletionResponseStreamChoice]
 
 
+from pydantic import BaseModel, Field
+from typing import Optional # 导入 Optional
+
 class CookieData(BaseModel):
-    Secure_1PAPISID: str = Field(..., alias="__Secure-1PAPISID")
-    Secure_1PSIDTS: str = Field(..., alias="__Secure-1PSIDTS")
+    # 将字段修改为可选，并提供默认值 None
+    Secure_1PAPISID: Optional[str] = Field(default=None, alias="__Secure-1PAPISID")
+    Secure_1PSIDTS: Optional[str] = Field(default=None, alias="__Secure-1PSIDTS")
 
 
 # --- Pydantic Models for /v1/models endpoint ---
