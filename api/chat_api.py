@@ -174,7 +174,7 @@ async def startup_event():
     print("INFO: Application startup: Initializing Gemini Client from environment variables...")
     # Secure_1PSID, Secure_1PSIDTS, and GEMINI_PROXY are global and read from env initially.
     # reinitialize_gemini_client will use these global values.
-    await reinitialize_gemini_client()
+    # await reinitialize_gemini_client()
     # The reinitialize_gemini_client function will print its own success/failure messages.
 
 
