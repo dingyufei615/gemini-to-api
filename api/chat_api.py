@@ -68,6 +68,8 @@ async def reinitialize_gemini_client(new_psid: Optional[str] = None, new_psidts:
     # Create and initialize a new client instance
     try:
         print(f"INFO: Creating new GeminiClient instance. PSID starts with: {Secure_1PSID[:10] if Secure_1PSID else 'N/A'}, PSIDTS starts with: {Secure_1PSIDTS[:10] if Secure_1PSIDTS else 'N/A'}")
+        await gemini_client.close()
+        print("INFO: gemini_client had been closed.")
         gemini_client = GeminiClient(
             Secure_1PSID=Secure_1PSID,
             Secure_1PSIDTS=Secure_1PSIDTS,
