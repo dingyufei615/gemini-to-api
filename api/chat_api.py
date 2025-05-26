@@ -34,8 +34,11 @@ app = FastAPI(title="Gemini OpenAI-Compatible API", version="0.1.0")
 
 # --- Pydantic Model for Cookie Update ---
 class CookieUpdateRequest(BaseModel):
-    secure_1papisid: str = Field(..., alias='__Secure-1PAPISID')
-    secure_1psidts: str = Field(..., alias='__Secure-1PSIDTS')
+    secure_1papisid: str = Field(..., validation_alias='__Secure-1PAPISID')
+    secure_1psidts: str = Field(..., validation_alias='__Secure-1PSIDTS')
+
+    class Config:
+        populate_by_name = True
 
 # --- Pydantic Models for OpenAI Compatibility ---
 
